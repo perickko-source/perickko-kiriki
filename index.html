@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Línea vital para que el móvil entienda el tamaño real de la pantalla -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KIRIKI</title>
     <style>
@@ -17,7 +16,7 @@
             width: 100%;
             margin: 0;
             padding: 0;
-            touch-action: manipulation; /* Mejora la respuesta táctil */
+            touch-action: manipulation;
         }
 
         body { 
@@ -28,7 +27,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-evenly; /* Distribuye el espacio mejor */
+            justify-content: space-evenly;
             perspective: 1200px;
         }
 
@@ -50,13 +49,15 @@
         #anuncio { 
             font-size: clamp(24px, 5vh, 45px); 
             color: #fff; 
-            height: 50px; 
+            height: 55px; 
             text-align: center;
             text-shadow: 0 0 15px var(--neon-green), 2px 2px 5px #000;
             margin: 5px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* --- ESCENA ADAPTABLE --- */
         .escena { 
             position: relative; 
             transform: rotateX(20deg); 
@@ -68,9 +69,8 @@
 
         .bandeja-container { 
             position: relative; 
-            /* Tamaños adaptables */
-            width: min(90vw, 500px); 
-            height: min(90vw, 500px); 
+            width: min(85vw, 500px); 
+            height: min(85vw, 500px); 
             background: #0a0a0a; border-radius: 50%; 
             box-shadow: 0 15px 0 #000, 0 30px 60px rgba(0,0,0,0.9);
             padding: 12px; box-sizing: border-box; 
@@ -84,74 +84,101 @@
             position: relative; display: flex; justify-content: center; align-items: center; 
         }
 
-        /* --- DADOS ADAPTABLES --- */
         .dados-area { display: flex; gap: 15px; position: absolute; z-index: 1; }
         .dado { 
-            width: clamp(60px, 15vw, 85px); 
-            height: clamp(60px, 15vw, 85px); 
+            width: clamp(65px, 16vw, 90px); 
+            height: clamp(65px, 16vw, 90px); 
             background: #fff; border-radius: 12px; 
             display: flex; align-items: center; justify-content: center; 
             box-shadow: 2px 8px 15px rgba(0,0,0,0.6); 
         }
 
-        /* Ajuste de puntos para dados más pequeños */
         .puntos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 15%; width: 100%; height: 100%; box-sizing: border-box; }
-        .punto { width: 80%; height: 80%; border-radius: 50%; margin: auto; }
+        .punto { width: 85%; height: 85%; border-radius: 50%; margin: auto; }
         .negro { background: #222; } .rojo-p { background: #d32f2f; } .inv { opacity: 0; }
-        .poker-txt { font-size: clamp(35px, 10vw, 55px); font-weight: bold; font-family: serif; }
-        .as-rojo { width: 60%; height: 60%; background: #d32f2f; border-radius: 50%; }
+        .poker-txt { font-size: clamp(38px, 11vw, 60px); font-weight: bold; font-family: serif; color: #222; }
+        .as-rojo { width: 65%; height: 65%; background: #d32f2f; border-radius: 50%; }
 
-        /* --- CUBILETE ADAPTABLE --- */
+        /* --- CUBILETE CON BORDADO Y MOVIMIENTO FLUIDO --- */
         .cubilete-wrap { 
             position: absolute; z-index: 100; cursor: pointer; 
-            display: flex; flex-direction: column; align-items: center; 
+            display: flex; flex-direction: column; align-items: center;
+            /* Curva de movimiento más natural (Back Out) */
+            transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translate(0, 0) rotate(0deg);
         }
         
         .cubilete { 
-            width: clamp(120px, 30vw, 170px); 
-            height: clamp(160px, 40vw, 230px); 
+            width: clamp(130px, 32vw, 180px); 
+            height: clamp(175px, 43vw, 240px); 
             background: linear-gradient(135deg, #0a0a0a 0%, #222 45%, #000 100%); 
-            border-radius: 80px 80px 20px 20px / 30px 30px 10px 10px; 
-            position: relative; border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 85px 85px 22px 22px / 32px 32px 12px 12px; 
+            position: relative; 
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+
+        /* EL BORDADO / COSTURA */
+        .cubilete::after {
+            content: "";
+            position: absolute;
+            bottom: 45px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            border-top: 2px dashed rgba(255,215,0,0.2); /* Bordado dorado sutil */
         }
 
         .sombra-cubilete { 
             width: 120%; height: 25px; background: rgba(0,0,0,0.7); 
             border-radius: 50%; margin-top: -10px; filter: blur(10px); z-index: -1; 
+            transition: opacity 0.4s;
         }
 
         .texto-accion {
-            color: var(--gold); font-size: 12px; letter-spacing: 2px;
-            margin-bottom: 5px; opacity: 0; transition: 0.3s;
+            color: var(--gold); font-size: 14px; letter-spacing: 2px;
+            margin-bottom: 8px; opacity: 0; transition: 0.3s;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
         }
 
         .cubilete-wrap.listo .texto-accion { opacity: 1; }
-        .cubilete-wrap.levantado { transform: translate(25%, -30%) rotate(15deg); }
-        .cubilete-wrap.levantado .texto-accion { opacity: 0; }
-        .agitando { animation: shake 0.1s infinite; }
-
-        @keyframes shake { 
-            0% { transform: translate(2px, 0); } 
-            50% { transform: translate(-2px, -4px); } 
-            100% { transform: translate(2px, 0); } 
+        
+        /* Movimiento de levantado fluido y amplio */
+        .cubilete-wrap.levantado { 
+            transform: translate(140px, -220px) rotate(25deg); 
         }
 
-        /* --- BOTÓN GRANDE PARA MÓVIL --- */
+        .cubilete-wrap.levantado .sombra-cubilete {
+            opacity: 0.3;
+            transform: scale(0.8) translateY(20px);
+        }
+
+        /* Ajuste móvil */
+        @media (max-width: 600px) {
+            .cubilete-wrap.levantado { 
+                transform: translate(110px, -200px) rotate(20deg); 
+            }
+        }
+
+        .cubilete-wrap.levantado .texto-accion { opacity: 0; }
+        .agitando { animation: shake 0.1s infinite cubic-bezier(.36,.07,.19,.97); }
+
+        @keyframes shake { 
+            0% { transform: translate(2px, 0) rotate(0deg); } 
+            25% { transform: translate(-2px, -2px) rotate(-1deg); } 
+            50% { transform: translate(2px, -4px) rotate(1deg); } 
+            75% { transform: translate(-2px, -2px) rotate(-1deg); } 
+            100% { transform: translate(2px, 0) rotate(0deg); } 
+        }
+
         .ui { margin-bottom: 20px; z-index: 10; width: 100%; display: flex; justify-content: center; }
         button { 
-            width: min(80%, 300px);
-            padding: 20px 0; font-size: 20px; font-weight: bold; 
+            width: min(80%, 320px);
+            padding: 22px 0; font-size: 22px; font-weight: bold; 
             background: var(--gold); border: none; border-radius: 50px; color: #000; cursor: pointer; 
             box-shadow: 0 6px 0 #b8860b; transition: 0.1s;
         }
         button:active { transform: translateY(4px); box-shadow: 0 2px 0 #b8860b; }
-
-        /* AJUSTES ESPECÍFICOS PARA MÓVILES MUY PEQUEÑOS */
-        @media (max-height: 600px) {
-            h1 { font-size: 30px; }
-            .bandeja-container { width: 70vh; height: 70vh; }
-        }
     </style>
 </head>
 <body>
@@ -183,8 +210,8 @@
     const CARAS = [
         { nombre: "negros", pts: 1, html: '<div class="puntos-grid"><div class="punto negro"></div><div class="punto inv"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto inv"></div><div class="punto negro"></div></div>' },
         { nombre: "rojos", pts: 2, html: '<div class="puntos-grid"><div class="punto rojo-p"></div><div class="punto inv"></div><div class="punto rojo-p"></div><div class="punto rojo-p"></div><div class="punto rojo-p"></div><div class="punto rojo-p"></div><div class="punto rojo-p"></div><div class="punto inv"></div><div class="punto rojo-p"></div></div>' },
-        { nombre: "jotas", pts: 3, html: '<div class="poker-txt" style="color:#222">J</div>' },
-        { nombre: "damas", pts: 4, html: '<div class="poker-txt" style="color:#222">Q</div>' },
+        { nombre: "jotas", pts: 3, html: '<div class="poker-txt">J</div>' },
+        { nombre: "damas", pts: 4, html: '<div class="poker-txt">Q</div>' },
         { nombre: "reyes", pts: 5, html: '<div class="poker-txt" style="color:#d32f2f">K</div>' },
         { nombre: "ases", pts: 6, html: '<div class="as-rojo"></div>' }
     ];
