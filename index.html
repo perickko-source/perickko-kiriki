@@ -46,16 +46,19 @@
             z-index: 10;
         }
 
+        /* ANUNCIO SIEMPRE POR ENCIMA */
         #anuncio { 
-            font-size: clamp(24px, 5vh, 45px); 
+            font-size: clamp(24px, 5vh, 42px); 
             color: #fff; 
-            height: 55px; 
+            height: 60px; 
             text-align: center;
             text-shadow: 0 0 15px var(--neon-green), 2px 2px 5px #000;
             margin: 5px 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 200; /* Prioridad máxima */
+            position: relative;
         }
 
         .escena { 
@@ -65,6 +68,7 @@
             justify-content: center; 
             align-items: center;
             width: 100%;
+            z-index: 1;
         }
 
         .bandeja-container { 
@@ -99,11 +103,9 @@
         .poker-txt { font-size: clamp(38px, 11vw, 60px); font-weight: bold; font-family: serif; color: #222; }
         .as-rojo { width: 65%; height: 65%; background: #d32f2f; border-radius: 50%; }
 
-        /* --- CUBILETE CON BORDADO Y MOVIMIENTO FLUIDO --- */
         .cubilete-wrap { 
             position: absolute; z-index: 100; cursor: pointer; 
             display: flex; flex-direction: column; align-items: center;
-            /* Curva de movimiento más natural (Back Out) */
             transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
             transform: translate(0, 0) rotate(0deg);
         }
@@ -113,26 +115,18 @@
             height: clamp(175px, 43vw, 240px); 
             background: linear-gradient(135deg, #0a0a0a 0%, #222 45%, #000 100%); 
             border-radius: 85px 85px 22px 22px / 32px 32px 12px 12px; 
-            position: relative; 
-            border: 1px solid rgba(255,255,255,0.05);
+            position: relative; border: 1px solid rgba(255,255,255,0.05);
             overflow: hidden;
         }
 
-        /* EL BORDADO / COSTURA */
         .cubilete::after {
-            content: "";
-            position: absolute;
-            bottom: 45px;
-            left: 0;
-            right: 0;
-            height: 1px;
-            border-top: 2px dashed rgba(255,215,0,0.2); /* Bordado dorado sutil */
+            content: ""; position: absolute; bottom: 45px; left: 0; right: 0;
+            height: 1px; border-top: 2px dashed rgba(255,215,0,0.2);
         }
 
         .sombra-cubilete { 
             width: 120%; height: 25px; background: rgba(0,0,0,0.7); 
             border-radius: 50%; margin-top: -10px; filter: blur(10px); z-index: -1; 
-            transition: opacity 0.4s;
         }
 
         .texto-accion {
@@ -143,20 +137,15 @@
 
         .cubilete-wrap.listo .texto-accion { opacity: 1; }
         
-        /* Movimiento de levantado fluido y amplio */
+        /* TRAYECTORIA AJUSTADA: Más lateral, menos alta */
         .cubilete-wrap.levantado { 
-            transform: translate(140px, -220px) rotate(25deg); 
+            transform: translate(160px, -140px) rotate(30deg); 
+            z-index: 50; /* Queda por debajo del anuncio (z-index 200) */
         }
 
-        .cubilete-wrap.levantado .sombra-cubilete {
-            opacity: 0.3;
-            transform: scale(0.8) translateY(20px);
-        }
-
-        /* Ajuste móvil */
         @media (max-width: 600px) {
             .cubilete-wrap.levantado { 
-                transform: translate(110px, -200px) rotate(20deg); 
+                transform: translate(120px, -120px) rotate(25deg); 
             }
         }
 
@@ -165,9 +154,7 @@
 
         @keyframes shake { 
             0% { transform: translate(2px, 0) rotate(0deg); } 
-            25% { transform: translate(-2px, -2px) rotate(-1deg); } 
             50% { transform: translate(2px, -4px) rotate(1deg); } 
-            75% { transform: translate(-2px, -2px) rotate(-1deg); } 
             100% { transform: translate(2px, 0) rotate(0deg); } 
         }
 
@@ -206,6 +193,7 @@
 
 <script>
     const sonidoCubilete = new Audio('cubilete.ogg');
+    let timerCierre;
 
     const CARAS = [
         { nombre: "negros", pts: 1, html: '<div class="puntos-grid"><div class="punto negro"></div><div class="punto inv"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto negro"></div><div class="punto inv"></div><div class="punto negro"></div></div>' },
@@ -220,12 +208,12 @@
 
     function tirar() {
         const wrap = document.getElementById('cubilete-btn');
+        clearTimeout(timerCierre);
         wrap.classList.remove('levantado', 'listo');
         document.getElementById('anuncio').innerText = "";
         
         sonidoCubilete.currentTime = 0;
         sonidoCubilete.play().catch(() => {});
-        
         wrap.classList.add('agitando');
 
         setTimeout(() => {
@@ -240,17 +228,29 @@
     function toggleMirar() {
         if (!dadosActuales[0]) return;
         const wrap = document.getElementById('cubilete-btn');
-        wrap.classList.toggle('levantado');
+        
         if (wrap.classList.contains('levantado')) {
-            const d1 = dadosActuales[0], d2 = dadosActuales[1];
-            let res = "";
-            if ((d1.pts === 1 && d2.pts === 2) || (d1.pts === 2 && d2.pts === 1)) res = "¡KIRIKI!";
-            else if (d1.pts === d2.pts) res = "Pareja de " + d1.nombre;
-            else res = (d1.pts + d2.pts);
-            document.getElementById('anuncio').innerText = res;
-        } else {
-            document.getElementById('anuncio').innerText = "";
+            bajarCubilete();
+            return;
         }
+
+        wrap.classList.add('levantado');
+        const d1 = dadosActuales[0], d2 = dadosActuales[1];
+        let res = "";
+        if ((d1.pts === 1 && d2.pts === 2) || (d1.pts === 2 && d2.pts === 1)) res = "¡KIRIKI!";
+        else if (d1.pts === d2.pts) res = "Pareja de " + d1.nombre;
+        else res = (d1.pts + d2.pts);
+        document.getElementById('anuncio').innerText = res;
+
+        clearTimeout(timerCierre);
+        timerCierre = setTimeout(bajarCubilete, 3000);
+    }
+
+    function bajarCubilete() {
+        const wrap = document.getElementById('cubilete-btn');
+        wrap.classList.remove('levantado');
+        document.getElementById('anuncio').innerText = "";
+        clearTimeout(timerCierre);
     }
 </script>
 </body>
